@@ -1,0 +1,19 @@
+PATH
+  remote: .
+  specs:
+    bitcoin_ticker (0.0.1)
+      redis (~> 3.2)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    rake (10.4.2)
+    redis (3.2.2)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  bitcoin_ticker!
+  bundler (~> 1.7)
+  rake (~> 10.0)
