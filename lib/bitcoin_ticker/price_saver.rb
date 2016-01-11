@@ -2,18 +2,22 @@ require "redis"
 
 module BitcoinTicker
   class PriceSaver
-    REDIS_KEY = "bitcoin-price"
+    DEFAULT_REDIS_KEY = "bitcoin-price"
 
-    def initialize
-      @redis = Redis.new
+    def initialize(client: Redis.new, key: DEFAULT_REDIS_KEY)
+      self.redis = client
+      self.key = key
     end
 
     def read
-      @redis.get(REDIS_KEY).to_f
+      redis.get(key).to_f
     end
 
     def write(current_price)
-      @redis.set(REDIS_KEY, current_price)
+      redis.set(key, current_price)
     end
+
+    private
+    attr_accessor :key, :client
   end
 end

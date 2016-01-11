@@ -16,11 +16,11 @@ module BitcoinTicker
       self.price_threshold = price_threshold
       self.slack_webhook_url = slack_webhook_url
       self.notifier = SlackNotifier.new(slack_webhook_url)
+      self.price_saver = PriceSaver.new
     end
 
     def tick
       current_price = PriceChecker.new.current_price
-      price_saver = PriceSaver.new
       previous_price = price_saver.read
       if PriceComparer.compare_to_threshold previous_price, current_price, price_threshold
         notifier.notify slack_webhook_url, current_price, current_price > previous_price
@@ -29,6 +29,6 @@ module BitcoinTicker
     end
 
     private
-    attr_accessor :price_threshold, :notifier
+    attr_accessor :price_threshold, :notifier, :price_saver
   end
 end
