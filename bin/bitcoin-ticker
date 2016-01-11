@@ -2,4 +2,8 @@
 
 require "bitcoin_ticker"
 
-BitcoinTicker::BitcoinTicker.new.tick
+threshold   = ENV.fetch("BITCOIN_PRICE_THRESHOLD", BitcoinTicker::DEFAULT_PRICE_THRESHOLD).to_f
+webhook_url = ENV.fetch("SLACK_WEBHOOK_URL") { raise BitcoinTicker::UsageError, 'You must provide a Slack Webhook URL!' }
+
+ticker = BitcoinTicker::BitcoinTicker.new(price_threshold: threshold, slack_webhook_url: url)
+ticker.tick

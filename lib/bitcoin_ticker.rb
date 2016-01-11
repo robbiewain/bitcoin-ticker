@@ -7,13 +7,15 @@ require "bitcoin_ticker/slack_notifier"
 module BitcoinTicker
   class BitcoinTicker
     include PriceComparer
+    DEFAULT_PRICE_THRESHOLD = 10.0
+
     # call-seq:
     #   BitcoinTicker.new price_threshold, slack_webhook_url
     #
     # Parameters:
-    #   * price_threshold   [Float] : Minimum variation of the BTC price before considering communicating it
+    #   * price_threshold   [Float] : Minimum variation of the BTC price before considering communicating it (default: 10.0)
     #   * slack_webhook_url [String]: URL of the Slack Webhook
-    def initialize(price_threshold: ENV["BITCOIN_PRICE_THRESHOLD"].to_f, slack_webhook_url: ENV["SLACK_WEBHOOK_URL"])
+    def initialize(price_threshold: DEFAULT_PRICE_THRESHOLD, slack_webhook_url:)
       self.price_threshold   = price_threshold
       self.slack_webhook_url = slack_webhook_url
       self.notifier          = SlackNotifier.new(slack_webhook_url)
