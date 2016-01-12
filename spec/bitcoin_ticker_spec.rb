@@ -106,7 +106,9 @@ module BitcoinTicker
     let(:slack_notifier) { described_class.new webhook_url: webhook_url }
 
     it "posts current price to slack" do
-      slack_notifier.notify webhook_url, current_price, true
+      expect(slack_notifier).to receive(:http_call)
+
+      slack_notifier.notify current_price, true
     end
 
     context "price drop" do

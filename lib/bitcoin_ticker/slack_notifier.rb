@@ -28,6 +28,10 @@ module BitcoinTicker
         icon_url: icon_url
       }
 
+      http_call
+    end
+
+    def http_call
       uri = URI(webhook_url)
       Net::HTTP.post_form(uri, payload: payload.to_json)
     end
