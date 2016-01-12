@@ -2,7 +2,9 @@ require "net/http"
 
 module BitcoinTicker
   class SlackNotifier
-    DEFAULT_TEXT     = "Bitcoin is #{price_increased ? "up" : "down"} to $#{"%.2f" % current_price}"
+    DEFAULT_TEXT_FMT = ->(price, increased) {
+      "Bitcoin is #{increased ? "up" : "down"} to $#{"%.2f" % price}"
+    }
     DEFAULT_USERNAME = "bitcoin-ticker"
     DEFAULT_ICON_URL = "https://en.bitcoin.it/w/images/en/2/29/BC_Logo_.png"
 
@@ -21,7 +23,7 @@ module BitcoinTicker
     #   * price_increased [Bool]  : Whether or not this price was price increase
     def notify(current_price, price_increased)
       payload = {
-        text:     text % [current_price, price_increased],
+        text:     text.call(current_price, price_increased),
         username: username,
         icon_url: icon_url
       }
