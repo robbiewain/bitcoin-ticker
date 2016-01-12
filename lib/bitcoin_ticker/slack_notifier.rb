@@ -8,7 +8,7 @@ module BitcoinTicker
     DEFAULT_USERNAME = "bitcoin-ticker"
     DEFAULT_ICON_URL = "https://en.bitcoin.it/w/images/en/2/29/BC_Logo_.png"
 
-    def initialize(webhook_url:, text: DEFAULT_TEXT, username: DEFAULT_USERNAME, icon_url: DEFAULT_ICON_URL)
+    def initialize(webhook_url:, text: DEFAULT_TEXT_FMT, username: DEFAULT_USERNAME, icon_url: DEFAULT_ICON_URL)
       self.webhook_url = webhook_url
       self.text        = text
       self.username    = username

@@ -3,13 +3,12 @@ require "bitcoin_ticker.rb"
 
 module BitcoinTicker
   describe BitcoinTicker do
-    let(:ticker) { BitcoinTicker.new }
+    let(:threshold) { 42.0 }
     let(:slack_webhook_url) { "https://hooks.slack.com/services/123/123" }
+    let(:ticker) { BitcoinTicker.new price_threshold: threshold, slack_webhook_url: slack_webhook_url}
     let(:slack_notifier) { double "Slack Notifier" }
     let(:price_saver) { double "Price Saver", read: previous_price, write: true }
     before do
-      expect(ENV).to receive(:[]).with("BITCOIN_PRICE_THRESHOLD").and_return "10"
-      allow(ENV).to receive(:[]).with("SLACK_WEBHOOK_URL").and_return slack_webhook_url
       expect(PriceChecker).to receive_message_chain(:new, :current_price).and_return current_price
       expect(PriceSaver).to receive(:new) { price_saver }
       allow(SlackNotifier).to receive(:new).and_return slack_notifier
@@ -18,7 +17,7 @@ module BitcoinTicker
       let(:current_price) { 100 }
       let(:previous_price) { 50 }
       it "notifies slack when price and saves new price" do
-        expect(slack_notifier).to receive(:notify).with slack_webhook_url, 100, true
+        expect(slack_notifier).to receive(:notify).with 100, true
         expect(price_saver).to receive(:write).with 100
         ticker.tick
       end
@@ -35,7 +34,7 @@ module BitcoinTicker
       let(:current_price) { 50 }
       let(:previous_price) { 100 }
       it "notifies slack when price and saves new price" do
-        expect(slack_notifier).to receive(:notify).with slack_webhook_url, 50, false
+        expect(slack_notifier).to receive(:notify).with 50, false
         expect(price_saver).to receive(:write).with 50
         ticker.tick
       end
@@ -64,20 +63,29 @@ module BitcoinTicker
   end
 
   describe PriceSaver do
-    let(:price_saver) { described_class.new }
-    before { Redis.new.del PriceSaver::REDIS_KEY }
-    it "starts empty" do
-      expect(price_saver.read).to eq 0.0
+    let(:redis) { instance_double(Redis) }
+    let(:key) { instance_double(String) }
+    let(:price_saver) { described_class.new(client: redis, key: key) }
+
+    context "#read" do
+      it "can read out of Redis" do
+        expect(redis).to receive(:get).with(key).once.and_return '42'
+        expect(price_saver.read).to eq 42.0
+      end
     end
+
     it "saves the price" do
-      price = 500.13
-      price_saver.write price
-      expect(price_saver.read).to eq price
+      price = double(:price)
+      expect(redis).to receive(:set).with(key, price).once
+      price_saver.write(price)
     end
   end
 
   describe PriceComparer do
-    let(:price_comparer) { described_class.new }
+    let(:price_comparer) { Class.new do
+      include PriceComparer
+    end.new }
+
     it "returns true if increased more than threshold" do
       expect(price_comparer.compare_to_threshold 10, 20, 5).to be true
     end
@@ -93,21 +101,19 @@ module BitcoinTicker
   end
 
   describe SlackNotifier do
-    let(:slack_notifier) { described_class.new }
     let(:current_price) { 123.45 }
     let(:webhook_url) { "https://slack.com/webhook_url/123" }
-    let(:text) { "Bitcoin is up to $#{current_price}" }
-    let(:username) { "bitcoin-ticker" }
-    let(:icon_url) { "https://en.bitcoin.it/w/images/en/2/29/BC_Logo_.png" }
-    let(:payload) { "{\"text\":\"#{text}\",\"username\":\"#{username}\",\"icon_url\":\"#{icon_url}\"}" }
-    before { expect(Net::HTTP).to receive(:post_form).with URI(webhook_url), payload: payload }
+    let(:slack_notifier) { described_class.new webhook_url: webhook_url }
+
     it "posts current price to slack" do
       slack_notifier.notify webhook_url, current_price, true
     end
+
     context "price drop" do
-      let(:text) { "Bitcoin is down to $#{current_price}" }
       it "posts current price to slack" do
-        slack_notifier.notify webhook_url, current_price, false
+        expect(slack_notifier).to receive(:http_call)
+
+        slack_notifier.notify current_price, false
       end
     end
   end

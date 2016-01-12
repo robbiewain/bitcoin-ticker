@@ -5,16 +5,16 @@ module BitcoinTicker
     DEFAULT_REDIS_KEY = "bitcoin-price"
 
     def initialize(client: Redis.new, key: DEFAULT_REDIS_KEY)
-      self.redis = client
+      self.client = client
       self.key = key
     end
 
     def read
-      redis.get(key).to_f
+      client.get(key).to_f
     end
 
     def write(current_price)
-      redis.set(key, current_price)
+      client.set(key, current_price)
     end
 
     private

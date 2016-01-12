@@ -17,8 +17,7 @@ module BitcoinTicker
     #   * slack_webhook_url [String]: URL of the Slack Webhook
     def initialize(price_threshold: DEFAULT_PRICE_THRESHOLD, slack_webhook_url:)
       self.price_threshold   = price_threshold
-      self.slack_webhook_url = slack_webhook_url
-      self.notifier          = SlackNotifier.new(slack_webhook_url)
+      self.notifier          = SlackNotifier.new(webhook_url: slack_webhook_url)
       self.price_saver       = PriceSaver.new
       self.price_checker     = PriceChecker.new
     end
@@ -28,7 +27,7 @@ module BitcoinTicker
       previous_price = price_saver.read
 
       if compare_to_threshold previous_price, current_price, price_threshold
-        notifier.notify slack_webhook_url, current_price, current_price > previous_price
+        notifier.notify current_price, current_price > previous_price
         price_saver.write current_price
       end
     end
