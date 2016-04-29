@@ -7,13 +7,42 @@ require "bitcoin_ticker/slack_notifier"
 module BitcoinTicker
   class BitcoinTicker
     def tick
-      current_price = PriceChecker.new.current_price
-      price_saver = PriceSaver.new
-      previous_price = price_saver.read
-      if PriceComparer.new.compare_to_threshold previous_price, current_price, ENV["BITCOIN_PRICE_THRESHOLD"].to_f
-        SlackNotifier.new.notify ENV["SLACK_WEBHOOK_URL"], current_price, current_price > previous_price
-        price_saver.write current_price
+      check_price :btc
+      check_price :eth
+    end
+
+    private
+
+    def check_price(ticker)
+      current_price = price_checker.current_price ticker
+      previous_price = price_saver.read ticker
+      if price_comparer.compare_to_threshold previous_price, current_price, price_thresholds[ticker].to_f
+        slack_notifier.notify ticker, current_price, current_price > previous_price
+        price_saver.write ticker, current_price
       end
+    end
+
+    def price_thresholds
+      @price_thresholds ||= {
+        btc: ENV["BITCOIN_PRICE_THRESHOLD"],
+        eth: ENV["ETHEREUM_PRICE_THRESHOLD"]
+      }
+    end
+
+    def price_checker
+      @price_checker ||= PriceChecker.new
+    end
+
+    def price_saver
+      @price_saver ||= PriceSaver.new
+    end
+
+    def price_comparer
+      @price_comparer ||= PriceComparer.new
+    end
+
+    def slack_notifier
+      @slack_notifier ||= SlackNotifier.new
     end
   end
 end

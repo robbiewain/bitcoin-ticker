@@ -6,24 +6,35 @@ module BitcoinTicker
     let(:ticker) { BitcoinTicker.new }
     let(:slack_webhook_url) { "https://hooks.slack.com/services/123/123" }
     let(:slack_notifier) { double "Slack Notifier" }
-    let(:price_saver) { double "Price Saver", read: previous_price, write: true }
+    let(:price_saver) { double "Price Saver" }
+    let(:price_checker) { double "Price Checker" }
     before do
       expect(ENV).to receive(:[]).with("BITCOIN_PRICE_THRESHOLD").and_return "10"
+      expect(ENV).to receive(:[]).with("ETHEREUM_PRICE_THRESHOLD").and_return "1"
       allow(ENV).to receive(:[]).with("SLACK_WEBHOOK_URL").and_return slack_webhook_url
-      expect(PriceChecker).to receive_message_chain(:new, :current_price).and_return current_price
-      expect(PriceSaver).to receive(:new) { price_saver }
-      allow(SlackNotifier).to receive(:new).and_return slack_notifier
+      allow(ticker).to receive(:price_checker) { price_checker }
+      expect(price_checker).to receive(:current_price).with(:btc) { current_btc_price }
+      expect(price_checker).to receive(:current_price).with(:eth) { current_eth_price }
+      allow(ticker).to receive(:price_saver) { price_saver }
+      expect(price_saver).to receive(:read).with(:btc) { previous_btc_price }
+      expect(price_saver).to receive(:read).with(:eth) { previous_eth_price }
+      allow(ticker).to receive(:slack_notifier).and_return slack_notifier
     end
     context "price rise" do
-      let(:current_price) { 100 }
-      let(:previous_price) { 50 }
+      let(:current_btc_price) { 100 }
+      let(:current_eth_price) { 10 }
+      let(:previous_btc_price) { 50 }
+      let(:previous_eth_price) { 5 }
       it "notifies slack when price and saves new price" do
-        expect(slack_notifier).to receive(:notify).with slack_webhook_url, 100, true
-        expect(price_saver).to receive(:write).with 100
+        expect(slack_notifier).to receive(:notify).with :btc, 100, true
+        expect(slack_notifier).to receive(:notify).with :eth, 10, true
+        expect(price_saver).to receive(:write).with :btc, 100
+        expect(price_saver).to receive(:write).with :eth, 10
         ticker.tick
       end
       context "less than threshold" do
-        let(:current_price) { 45 }
+        let(:current_btc_price) { 45 }
+        let(:current_eth_price) { 5.50 }
         it "doesn't notify slack or save the new price" do
           expect(slack_notifier).not_to receive(:notify)
           expect(price_saver).not_to receive(:write)
@@ -32,15 +43,20 @@ module BitcoinTicker
       end
     end
     context "price drop" do
-      let(:current_price) { 50 }
-      let(:previous_price) { 100 }
+      let(:current_btc_price) { 50 }
+      let(:current_eth_price) { 5 }
+      let(:previous_btc_price) { 100 }
+      let(:previous_eth_price) { 10 }
       it "notifies slack when price and saves new price" do
-        expect(slack_notifier).to receive(:notify).with slack_webhook_url, 50, false
-        expect(price_saver).to receive(:write).with 50
+        expect(slack_notifier).to receive(:notify).with :btc, 50, false
+        expect(slack_notifier).to receive(:notify).with :eth, 5, false
+        expect(price_saver).to receive(:write).with :btc, 50
+        expect(price_saver).to receive(:write).with :eth, 5
         ticker.tick
       end
       context "less than threshold" do
-        let(:current_price) { 95 }
+        let(:current_btc_price) { 95 }
+        let(:current_eth_price) { 9.50 }
         it "doesn't notify slack or save the new price" do
           expect(slack_notifier).not_to receive(:notify)
           expect(price_saver).not_to receive(:write)
@@ -55,24 +71,34 @@ module BitcoinTicker
     let(:price) { 1000 }
     before do
       expect(Net::HTTP).to receive(:get_response)
-        .with(URI(PriceChecker::COINBASE_SPOT_PRICE_URI))
+        .with(URI(PriceChecker::PRICE_URIS[:btc]))
         .and_return(OpenStruct.new status: 200, body: "{ \"data\": { \"amount\": \"#{price}\" } }")
+      expect(Net::HTTP).to receive(:get_response)
+        .with(URI(PriceChecker::PRICE_URIS[:eth]))
+        .and_return(OpenStruct.new status: 200, body: "{ \"USDT_ETH\": { \"last\": \"#{price}\" } }")
     end
     it "returns the price" do
-      expect(price_checker.current_price).to eq price
+      expect(price_checker.current_price(:btc)).to eq price
+      expect(price_checker.current_price(:eth)).to eq price
     end
   end
 
   describe PriceSaver do
     let(:price_saver) { described_class.new }
-    before { Redis.new.del PriceSaver::REDIS_KEY }
+    before do
+       Redis.new.del PriceSaver::REDIS_KEYS[:btc]
+       Redis.new.del PriceSaver::REDIS_KEYS[:eth]
+    end
     it "starts empty" do
-      expect(price_saver.read).to eq 0.0
+      expect(price_saver.read :btc).to eq 0.0
+      expect(price_saver.read :eth).to eq 0.0
     end
     it "saves the price" do
       price = 500.13
-      price_saver.write price
-      expect(price_saver.read).to eq price
+      price_saver.write :btc, price
+      price_saver.write :eth, price
+      expect(price_saver.read :btc).to eq price
+      expect(price_saver.read :eth).to eq price
     end
   end
 
@@ -96,18 +122,29 @@ module BitcoinTicker
     let(:slack_notifier) { described_class.new }
     let(:current_price) { 123.45 }
     let(:webhook_url) { "https://slack.com/webhook_url/123" }
-    let(:text) { "Bitcoin is up to $#{current_price}" }
-    let(:username) { "bitcoin-ticker" }
-    let(:icon_url) { "https://en.bitcoin.it/w/images/en/2/29/BC_Logo_.png" }
-    let(:payload) { "{\"text\":\"#{text}\",\"username\":\"#{username}\",\"icon_url\":\"#{icon_url}\"}" }
-    before { expect(Net::HTTP).to receive(:post_form).with URI(webhook_url), payload: payload }
+    let(:btc_text) { "Bitcoin is up to $#{current_price}" }
+    let(:eth_text) { "Ethereum is up to $#{current_price}" }
+    let(:btc_username) { "bitcoin-ticker" }
+    let(:eth_username) { "ethereum-ticker" }
+    let(:btc_icon_url) { "https://en.bitcoin.it/w/images/en/2/29/BC_Logo_.png" }
+    let(:eth_icon_url) { "https://www.ethereum.org/images/logos/ETHEREUM-ICON_Black.png" }
+    let(:btc_payload) { "{\"text\":\"#{btc_text}\",\"username\":\"#{btc_username}\",\"icon_url\":\"#{btc_icon_url}\"}" }
+    let(:eth_payload) { "{\"text\":\"#{eth_text}\",\"username\":\"#{eth_username}\",\"icon_url\":\"#{eth_icon_url}\"}" }
+    before do
+      allow(ENV).to receive(:[]).with("SLACK_WEBHOOK_URL").and_return webhook_url
+      expect(Net::HTTP).to receive(:post_form).with URI(webhook_url), payload: btc_payload
+      expect(Net::HTTP).to receive(:post_form).with URI(webhook_url), payload: eth_payload
+    end
     it "posts current price to slack" do
-      slack_notifier.notify webhook_url, current_price, true
+      slack_notifier.notify :btc, current_price, true
+      slack_notifier.notify :eth, current_price, true
     end
     context "price drop" do
-      let(:text) { "Bitcoin is down to $#{current_price}" }
+      let(:btc_text) { "Bitcoin is down to $#{current_price}" }
+      let(:eth_text) { "Ethereum is down to $#{current_price}" }
       it "posts current price to slack" do
-        slack_notifier.notify webhook_url, current_price, false
+        slack_notifier.notify :btc, current_price, false
+        slack_notifier.notify :eth, current_price, false
       end
     end
   end

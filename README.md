@@ -1,6 +1,6 @@
 # BitcoinTicker
 
-A Bitcoin ticker that sends price changes to Slack
+A Bitcoin/Ethereum ticker that sends price changes to Slack
 
 ## Installation
 
@@ -8,9 +8,10 @@ Install Redis
 
 ## Configuration
 
-The bitcoin ticker will only notify Slack if the bitcoin price changes by more than the threshold. To set the threshold to $10:
+The bitcoin/ethereum ticker will only notify Slack if the bitcoin/ethereum price changes by more than the threshold. To set the bitcoin threshold to $10 and the ethereum threshold to $1:
 ```
 export BITCOIN_PRICE_THRESHOLD=10
+export ETHEREUM_PRICE_THRESHOLD=1
 ```
 
 A Slack webhook url is used to send the update to Slack. For example:
