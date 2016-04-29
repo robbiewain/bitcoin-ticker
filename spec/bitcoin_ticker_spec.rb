@@ -126,10 +126,10 @@ module BitcoinTicker
     let(:eth_text) { "Ethereum is up to $#{current_price}" }
     let(:btc_username) { "bitcoin-ticker" }
     let(:eth_username) { "ethereum-ticker" }
-    let(:btc_icon_url) { "https://en.bitcoin.it/w/images/en/2/29/BC_Logo_.png" }
-    let(:eth_icon_url) { "https://www.ethereum.org/images/logos/ETHEREUM-ICON_Black.png" }
-    let(:btc_payload) { "{\"text\":\"#{btc_text}\",\"username\":\"#{btc_username}\",\"icon_url\":\"#{btc_icon_url}\"}" }
-    let(:eth_payload) { "{\"text\":\"#{eth_text}\",\"username\":\"#{eth_username}\",\"icon_url\":\"#{eth_icon_url}\"}" }
+    let(:btc_icon_emoji) { ":bitcoin:" }
+    let(:eth_icon_emoji) { ":ethereum:" }
+    let(:btc_payload) { "{\"text\":\"#{btc_text}\",\"username\":\"#{btc_username}\",\"icon_emoji\":\"#{btc_icon_emoji}\"}" }
+    let(:eth_payload) { "{\"text\":\"#{eth_text}\",\"username\":\"#{eth_username}\",\"icon_emoji\":\"#{eth_icon_emoji}\"}" }
     before do
       allow(ENV).to receive(:[]).with("SLACK_WEBHOOK_URL").and_return webhook_url
       expect(Net::HTTP).to receive(:post_form).with URI(webhook_url), payload: btc_payload
