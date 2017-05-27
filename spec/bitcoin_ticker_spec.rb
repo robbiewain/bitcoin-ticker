@@ -75,7 +75,7 @@ module BitcoinTicker
         .and_return(OpenStruct.new status: 200, body: "{ \"data\": { \"amount\": \"#{price}\" } }")
       expect(Net::HTTP).to receive(:get_response)
         .with(URI(PriceChecker::PRICE_URIS[:eth]))
-        .and_return(OpenStruct.new status: 200, body: "{ \"USDT_ETH\": { \"last\": \"#{price}\" } }")
+        .and_return(OpenStruct.new status: 200, body: "{ \"data\": { \"amount\": \"#{price}\" } }")
     end
     it "returns the price" do
       expect(price_checker.current_price(:btc)).to eq price
