@@ -5,7 +5,8 @@ module BitcoinTicker
   class PriceChecker
     PRICE_URIS = {
       btc: "https://api.coinbase.com/v2/prices/BTC-USD/spot",
-      eth: "https://api.coinbase.com/v2/prices/ETH-USD/spot"
+      eth: "https://api.coinbase.com/v2/prices/ETH-USD/spot",
+      ltc: "https://api.coinbase.com/v2/prices/LTC-USD/spot"
     }
 
     def current_price(ticker)

@@ -12,6 +12,7 @@ The bitcoin/ethereum ticker will only notify Slack if the bitcoin/ethereum price
 ```
 export BITCOIN_PRICE_THRESHOLD=10
 export ETHEREUM_PRICE_THRESHOLD=1
+export LITECOIN_PRICE_THRESHOLD=5
 ```
 
 A Slack webhook url is used to send the update to Slack. For example:

@@ -4,11 +4,13 @@ module BitcoinTicker
   class SlackNotifier
     FULLNAMES = {
       btc: "Bitcoin",
-      eth: "Ethereum"
+      eth: "Ethereum",
+      ltc: "Litecoin"
     }
     USERNAMES = {
       btc: "bitcoin-ticker",
-      eth: "ethereum-ticker"
+      eth: "ethereum-ticker",
+      ltc: "litecoin-ticker"
     }
 
     def notify(ticker, current_price, price_increased)

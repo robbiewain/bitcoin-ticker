@@ -4,7 +4,8 @@ module BitcoinTicker
   class PriceSaver
     REDIS_KEYS = {
       btc: "bitcoin-price",
-      eth: "ethereum-price"
+      eth: "ethereum-price",
+      ltc: "litecoin-price"
     }
 
     def read(ticker)
