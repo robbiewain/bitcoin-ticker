@@ -5,12 +5,14 @@ module BitcoinTicker
     FULLNAMES = {
       btc: "Bitcoin",
       eth: "Ethereum",
-      ltc: "Litecoin"
+      ltc: "Litecoin",
+      neo: "Neo"
     }
     USERNAMES = {
       btc: "bitcoin-ticker",
       eth: "ethereum-ticker",
-      ltc: "litecoin-ticker"
+      ltc: "litecoin-ticker",
+      neo: "neo-ticker"
     }
 
     def notify(ticker, current_price, price_increased)

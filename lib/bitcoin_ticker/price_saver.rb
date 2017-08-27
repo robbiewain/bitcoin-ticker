@@ -5,7 +5,8 @@ module BitcoinTicker
     REDIS_KEYS = {
       btc: "bitcoin-price",
       eth: "ethereum-price",
-      ltc: "litecoin-price"
+      ltc: "litecoin-price",
+      neo: "neo-price"
     }
 
     def read(ticker)

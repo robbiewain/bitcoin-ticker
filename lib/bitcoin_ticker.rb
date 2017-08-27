@@ -10,6 +10,7 @@ module BitcoinTicker
       check_price :btc
       check_price :eth
       check_price :ltc
+      check_price :neo
     end
 
     private
@@ -27,7 +28,8 @@ module BitcoinTicker
       @price_thresholds ||= {
         btc: ENV["BITCOIN_PRICE_THRESHOLD"],
         eth: ENV["ETHEREUM_PRICE_THRESHOLD"],
-        ltc: ENV["LITECOIN_PRICE_THRESHOLD"]
+        ltc: ENV["LITECOIN_PRICE_THRESHOLD"],
+        neo: ENV["NEO_PRICE_THRESHOLD"]
       }
     end
 
