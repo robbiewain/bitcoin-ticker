@@ -6,8 +6,10 @@ require "bitcoin_ticker/slack_notifier"
 
 module BitcoinTicker
   class BitcoinTicker
+    TICKERS = %i[btc bch eth ltc neo]
+
     def tick
-      %i[btc bch eth ltc neo].each do |ticker|
+      TICKERS.each do |ticker|
         check_price(ticker)
       end
     end

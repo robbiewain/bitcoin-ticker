@@ -4,12 +4,14 @@ module BitcoinTicker
   class SlackNotifier
     FULLNAMES = {
       btc: "Bitcoin",
+      bch: "Bitcoin Cash",
       eth: "Ethereum",
       ltc: "Litecoin",
       neo: "Neo"
     }
     USERNAMES = {
       btc: "bitcoin-ticker",
+      bch: "bitcoin-cash-ticker",
       eth: "ethereum-ticker",
       ltc: "litecoin-ticker",
       neo: "neo-ticker"
