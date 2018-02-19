@@ -7,30 +7,24 @@ require "bitcoin_ticker/slack_notifier"
 module BitcoinTicker
   class BitcoinTicker
     def tick
-      check_price :btc
-      check_price :eth
-      check_price :ltc
-      check_price :neo
+      %i[btc eth ltc neo].each do |ticker|
+        check_price(ticker)
+      end
     end
 
     private
 
     def check_price(ticker)
-      current_price = price_checker.current_price ticker
-      previous_price = price_saver.read ticker
-      if price_comparer.compare_to_threshold previous_price, current_price, price_thresholds[ticker].to_f
-        slack_notifier.notify ticker, current_price, current_price > previous_price
-        price_saver.write ticker, current_price
+      current_price = price_checker.current_price(ticker)
+      previous_price = price_saver.read(ticker)
+      if price_comparer.compare_to_threshold(previous_price, current_price, price_threshold)
+        slack_notifier.notify(ticker, current_price, current_price > previous_price)
+        price_saver.write(ticker, current_price)
       end
     end
 
-    def price_thresholds
-      @price_thresholds ||= {
-        btc: ENV["BITCOIN_PRICE_THRESHOLD"],
-        eth: ENV["ETHEREUM_PRICE_THRESHOLD"],
-        ltc: ENV["LITECOIN_PRICE_THRESHOLD"],
-        neo: ENV["NEO_PRICE_THRESHOLD"]
-      }
+    def price_threshold
+      @price_threshold ||= ENV["PERCENT_CHANGE_THRESHOLD"].to_f
     end
 
     def price_checker
