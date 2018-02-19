@@ -4,6 +4,7 @@ module BitcoinTicker
   class PriceSaver
     REDIS_KEYS = {
       btc: "bitcoin-price",
+      bch: "bitcoin-cash-price",
       eth: "ethereum-price",
       ltc: "litecoin-price",
       neo: "neo-price"
