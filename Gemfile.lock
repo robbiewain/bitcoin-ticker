@@ -29,9 +29,9 @@ PLATFORMS
 
 DEPENDENCIES
   bitcoin_ticker!
-  bundler (~> 1.15)
+  bundler (~> 2.1.4)
   rake (~> 12.0)
   rspec (~> 3.6)
 
 BUNDLED WITH
-   1.15.0
+   2.1.4
